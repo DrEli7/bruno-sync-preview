@@ -1,0 +1,6 @@
+{
+  "version": "1",
+  "name": "Synthetic pet API",
+  "items": [{ "type": "folder", "name": "Pets", "items": [{ "type": "http-request", "name": "List pets", "request": { "method": "GET", "url": "{{baseUrl}}/pets", "headers": [], "params": [], "tests": "test('OK', () => expect(res.status).to.equal(200));", "script": { "req": "bru.setVar('example', 'synthetic');" }, "vars": { "req": [], "res": [] } } }] }],
+  "environments": [{ "name": "Example", "variables": [{ "name": "baseUrl", "value": "https://example.invalid", "type": "text", "enabled": true }] }]
+}

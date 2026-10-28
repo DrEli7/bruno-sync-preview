@@ -1,0 +1,5 @@
+{
+  "version": "1",
+  "name": "Synthetic pet API",
+  "items": [{ "type": "folder", "name": "Pets", "items": [{ "type": "http-request", "name": "List pets", "request": { "method": "GET", "url": "{{baseUrl}}/v2/pets", "headers": [], "params": [] } }, { "type": "http-request", "name": "Create pet", "request": { "method": "POST", "url": "{{baseUrl}}/v2/pets", "headers": [], "params": [] } }] }]
+}

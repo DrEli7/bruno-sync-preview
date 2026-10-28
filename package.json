@@ -1,0 +1,14 @@
+{
+  "name": "bruno-sync-preview",
+  "version": "0.1.0",
+  "description": "Read-only replacement-risk preview for Bruno collection JSON before OpenAPI sync.",
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "bin": { "bruno-sync-preview": "src/cli.mjs" },
+  "exports": "./src/index.mjs",
+  "files": ["src", "README.md", "LICENSE"],
+  "scripts": { "test": "node --test", "demo": "node src/cli.mjs examples/current.json examples/candidate.json" },
+  "license": "MIT",
+  "repository": { "type": "git", "url": "https://github.com/DrEli7/bruno-sync-preview.git" },
+  "devDependencies": { "@usebruno/converters": "0.25.0" }
+}
