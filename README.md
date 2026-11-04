@@ -1,18 +1,18 @@
 # bruno-sync-preview
 
-**在重新导入 OpenAPI 之前，看清 Bruno 集合里的手写脚本、测试和变量可能损失在哪里。**
+**Review which handwritten scripts, tests and variables could be lost before re-importing OpenAPI into Bruno.**
 
 Offline replacement-risk preview for Bruno collection JSON. Keep Bruno's importer; review the diff before replacing your collection.
 
-## 为什么做这个
+## Why this exists
 
-Bruno 已有 OpenAPI 导入和 Sync 功能，本项目不实现另一个 API 客户端、OpenAPI 转换器或同步器。它消费官方生成的 collection JSON，把手写配置的变化汇总成适合代码审查、终端和 CI 的清单，不需要运行请求、启动 Bruno 或连接服务。
+Bruno already provides OpenAPI import and Sync. This project consumes official collection JSON and summarizes changes to handwritten configuration for code review, terminals and CI. It does not run requests, start Bruno or connect to a service, and does not implement another API client, converter or synchronizer.
 
-**模型是“用候选集合替换当前集合会变化什么”**，不是对 Bruno 各版本 Sync 合并逻辑的模拟。若上游 Sync 保留了某项设置，报告中的风险仍需人工核实。没有宣称能替代官方备份或恢复功能。
+The model is **what would change if the candidate collection replaced the current collection**, not a simulation of the merge logic in each Bruno Sync version. If upstream Sync preserves a setting, a reported risk still needs human review. This tool does not replace official backup or restore features.
 
-## 安装和 30 秒示例
+## Installation and a 30-second example
 
-需要 Node.js 22 或更高版本。本项目通过源码使用，尚未发布到 npm。
+Requires Node.js 22 or newer. Use the source checkout; this project has not been published to npm.
 
 ```sh
 git clone https://github.com/DrEli7/bruno-sync-preview.git
@@ -22,18 +22,18 @@ npm run demo
 npm test
 ```
 
-示例全部是合成数据。当前版本包含一个手写测试、一个请求脚本和一个环境；候选版本更改路径并新增请求。报告会标出删除或变化的字段，不会打印它们的值。
+All examples are synthetic. The current snapshot contains a handwritten test, a request script and an environment; the candidate changes a path and adds a request. The report identifies removed or changed fields without printing their values.
 
-## 接入真实工作流
+## Use with real collections
 
-1. 在 Bruno 中将现有集合导出为 **Bruno collection JSON**，保存为 `current.json`。
-2. 用你安装的官方 Bruno CLI 将新的 OpenAPI 文档生成到独立 JSON 文件：
+1. Export the existing collection from Bruno as **Bruno collection JSON**, saved as `current.json`.
+2. Use your installed official Bruno CLI to generate a separate JSON file from the new OpenAPI document:
 
 ```sh
 bru import openapi --source api.yml --output-file candidate.json --collection-name "My API"
 ```
 
-3. 比较两份快照：
+3. Compare the snapshots:
 
 ```sh
 node src/cli.mjs current.json candidate.json
@@ -41,28 +41,28 @@ node src/cli.mjs current.json candidate.json --format json
 node src/cli.mjs current.json candidate.json --fail-on-risk > review.md
 ```
 
-工具只读取两个显式文件并写 stdout；不修改输入，不调用网络，不执行脚本。重定向到文件由调用者的 shell 完成。不要重定向到输入文件。
+The tool reads only the two explicit files and writes to stdout. It does not modify inputs, access the network or execute scripts. File redirection is performed by your shell; do not redirect to an input file.
 
-| 退出码 | 含义 |
+| Exit code | Meaning |
 | --- | --- |
-| 0 | 成功生成报告；默认不因为差异失败 |
-| 1 | 开启 `--fail-on-risk`，且原有项目/字段被改变或移除 |
-| 2 | 参数、JSON 或支持范围错误 |
+| 0 | Report generated; differences do not fail the command by default |
+| 1 | `--fail-on-risk` was enabled and existing items or fields changed or disappeared |
+| 2 | Argument, JSON or unsupported-format error |
 
-## 检查范围
+## Comparison scope
 
-- 按 **完整文件夹名称数组 + 请求名称** 精确匹配，避开每次导入会变化的 UID。
-- HTTP/GraphQL 请求的方法、URL、脚本、测试、变量、断言、认证、headers、params、body 和文档变化。
-- 文件夹继承的 request 设置、collection root、环境和 `brunoConfig` 变化。
-- 新增/移除项、请求类型、示例、settings、标签和描述变化。
-- 拒绝同路径重名项与不支持的 websocket/gRPC/JS/app 项，防止静默漏检。
-- 项目身份不依赖顶层 `uid`、排序号 `seq`、本地 `pathname`、`filename`；仅这些项目元数据未被选入比较。请求值中的同名字段仍严格比较，不会因为叫 `uid` 或 `filename` 就漏掉变化。
+- Exact matching by the **full folder-name array plus request name**, avoiding UIDs that can change on each import.
+- HTTP/GraphQL methods, URLs, scripts, tests, variables, assertions, authentication, headers, params, bodies and documentation.
+- Inherited folder request settings, collection root settings, environments and `brunoConfig`.
+- Added/removed items, request types, examples, settings, tags and descriptions.
+- Duplicate names at the same path and unsupported websocket/gRPC/JS/app items are rejected to avoid silent omissions.
+- Item identity ignores top-level `uid`, ordering `seq`, local `pathname` and `filename`. Only this item metadata is excluded. Fields with the same names inside request values are still compared strictly.
 
-报告**不包含任何字段值、URL、认证、脚本或请求正文**。集合中的文件夹/请求名称会出现在报告中，发布报告之前仍应确认这些名称不包含私人信息。
+Reports contain **no field values, URLs, authentication, scripts or request bodies**. Folder and request names are included; check that names contain no private information before sharing a report.
 
-风险计数是有风险的变化记录数，不是唯一请求数。数组顺序变化、嵌套字段的生成 UID 变化可能产生保守的字段风险。改名/移动显示为“移除 + 新增”，不猜测意图。仅比较列出的字段；不支持未知自定义插件字段，也不解析 `.bru` 源目录或 OpenCollection YAML。API 结果和备份压缩包不能作为输入。
+Risk counts refer to risky change records, not unique requests. Reordered arrays or regenerated UIDs inside nested fields can produce conservative field risks. Renames and moves appear as removal plus addition; intent is not inferred. Only the listed fields are compared. Unknown custom plugin fields, `.bru` source directories and OpenCollection YAML are unsupported. API results and backup archives are not valid inputs.
 
-## 作为库使用
+## Library API
 
 ```js
 import { previewSync, toMarkdown } from './src/index.mjs';
@@ -70,12 +70,12 @@ const report = previewSync(currentCollection, generatedCollection);
 console.log(toMarkdown(report));
 ```
 
-## 上游与验证
+## Upstream references and verification
 
-- [Bruno 官方 CLI 导入说明](https://github.com/usebruno/bruno/blob/main/packages/bruno-cli/readme.md)
-- [Bruno collection 类型](https://github.com/usebruno/bruno/blob/main/packages/bruno-schema-types/src/collection/collection.ts)
-- [Bruno HTTP request 类型](https://github.com/usebruno/bruno/blob/main/packages/bruno-schema-types/src/requests/http.ts)
+- [Official Bruno CLI import documentation](https://github.com/usebruno/bruno/blob/main/packages/bruno-cli/readme.md)
+- [Bruno collection types](https://github.com/usebruno/bruno/blob/main/packages/bruno-schema-types/src/collection/collection.ts)
+- [Bruno HTTP request types](https://github.com/usebruno/bruno/blob/main/packages/bruno-schema-types/src/requests/http.ts)
 
-测试通过官方 `@usebruno/converters` 0.25.0 将小型 OpenAPI 文档真实转换后交给预览器，不只依赖手写 fixture。其他测试覆盖重名、路径碰撞、敏感值不出报告、继承设置、CLI 退出码和输入不变。运行时只使用 Node 标准库；官方转换器只用于兼容性测试。GitHub Actions 配置覆盖 Windows/Linux 与 Node 22/24。
+Compatibility tests use official `@usebruno/converters` 0.25.0 to convert a small OpenAPI document and pass the real result to the previewer, alongside handwritten fixtures. Other tests cover duplicate names, path collisions, omission of sensitive values, inherited settings, CLI exit codes and input preservation. Runtime code uses only Node's standard library; the official converter is a test dependency. GitHub Actions covers Windows/Linux and Node 22/24.
 
-Bruno 是其项目维护者的商标；这是独立社区工具。MIT License。
+Bruno is a trademark of its maintainers. This is an independent community tool. MIT License.

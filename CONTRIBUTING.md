@@ -1,6 +1,6 @@
 # Contributing
 
-欢迎提交可复现的问题和小范围改进。请用合成数据提供最小输入、预期输出、Node 版本和复现命令；不要上传真实文档、凭据、环境变量或私人数据。
+Reproducible issues and focused improvements are welcome. Use synthetic data to provide minimal input, expected output, your Node version and reproduction commands. Do not upload real documents, credentials, environment variables or private data.
 
 Run `npm ci --ignore-scripts`, then `npm test` and `npm run demo`. Add regression tests for behavior changes. Keep input files read-only and document unsupported upstream formats explicitly. Do not replace established parsers with ad-hoc parsing code.
 
